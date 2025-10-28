@@ -1,0 +1,14 @@
+# Don't include these in npm package
+src/
+tsconfig.json
+.cursorrules
+.git
+.gitignore
+.gitattributes
+STATUS.md
+PUBLISHING.md
+*.log
+*.tgz
+node_modules/
+.DS_Store
+
