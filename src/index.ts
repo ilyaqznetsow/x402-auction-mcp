@@ -39,7 +39,7 @@ const TOOLS: Tool[] = [
     name: 'create_auction_bid',
     description: `Create a bid in the x402 auction. Returns payment instructions (HTTP 402 Payment Required). 
     One bid per wallet. Bid amount: ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} TON. 
-    Payment expires in ${BID_LIMITS.PAYMENT_TIMEOUT_SECONDS}s. Use tonconnect_universal_link to pay.`,
+    Payment expires in ${BID_LIMITS.PAYMENT_TIMEOUT_SECONDS}s. Pay manually or use ton_deeplink.`,
     inputSchema: {
       type: 'object',
       properties: {

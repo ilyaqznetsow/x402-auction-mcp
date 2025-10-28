@@ -87,7 +87,7 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
     status: HTTP_STATUS.PAYMENT_REQUIRED,
     ...response,
     ton_deeplink: tonDeeplink,
-    message: `Payment required for bid. Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or use ton_deeplink to pay from another device, or use tonconnect_universal_link.`,
+    message: `Payment required. Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
   };
 }
 
@@ -111,7 +111,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
       status,
       ...data,
       ton_deeplink: tonDeeplink,
-      message: `Bid payment pending. Send ${data.ton_amount} TON to ${data.pay_to} with comment "${data.bid_id}". Or use ton_deeplink to pay from another device, or use tonconnect_universal_link.`,
+      message: `Bid payment pending. Send ${data.ton_amount} TON to ${data.pay_to} with comment "${data.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
     };
   }
 
