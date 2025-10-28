@@ -84,7 +84,7 @@ describe('Constants', () => {
     });
 
     it('should use lowercase error codes', () => {
-      Object.values(ERROR_CODES).forEach((code) => {
+      Object.values(ERROR_CODES).forEach((code: string) => {
         expect(code).toBe(code.toLowerCase());
       });
     });

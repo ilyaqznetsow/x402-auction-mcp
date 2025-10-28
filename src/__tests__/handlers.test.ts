@@ -40,7 +40,7 @@ describe('Handler Validation', () => {
 
   describe('Wallet Validation', () => {
     it('should reject empty wallet', () => {
-      const wallet = '';
+      const wallet: string = '';
       expect(!wallet || wallet.trim().length === 0).toBe(true);
     });
 
@@ -50,7 +50,7 @@ describe('Handler Validation', () => {
     });
 
     it('should reject non-string wallet', () => {
-      const wallet = 123 as any;
+      const wallet: any = 123;
       expect(typeof wallet !== 'string').toBe(true);
     });
 
@@ -69,7 +69,7 @@ describe('Handler Validation', () => {
 
   describe('Bid ID Validation', () => {
     it('should reject empty bid ID', () => {
-      const bidId = '';
+      const bidId: string = '';
       expect(!bidId || bidId.trim().length === 0).toBe(true);
     });
 
