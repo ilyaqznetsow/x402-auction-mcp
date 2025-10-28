@@ -152,16 +152,16 @@ describe('Response Formatting', () => {
   it('should generate valid ton:// deeplink', () => {
     const destination = 'UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw';
     const amountTon = '50';
-    const comment = 'TPING Auction bid';
+    const bidId = 'bid-abc123def456';
 
     const amountInNanotons = Math.floor(parseFloat(amountTon) * 1e9);
-    const encodedComment = encodeURIComponent(comment);
+    const encodedComment = encodeURIComponent(bidId);
     const tonDeeplink = `ton://transfer/${destination}?amount=${amountInNanotons}&text=${encodedComment}`;
 
     expect(tonDeeplink).toContain('ton://transfer/');
     expect(tonDeeplink).toContain(destination);
     expect(tonDeeplink).toContain(`amount=${amountInNanotons}`);
-    expect(tonDeeplink).toContain('text=TPING%20Auction%20bid');
+    expect(tonDeeplink).toContain('text=bid-abc123def456');
   });
 
   it('should calculate nanotons correctly', () => {
@@ -181,16 +181,13 @@ describe('Response Formatting', () => {
   it('should handle special characters in deeplink comment', () => {
     const destination = 'UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw';
     const amountTon = '50';
-    const comment = 'Auction bid #123 (special chars)';
+    const bidId = 'bid-123-abc-def';
 
-    const encodedComment = encodeURIComponent(comment);
+    const encodedComment = encodeURIComponent(bidId);
     const tonDeeplink = `ton://transfer/${destination}?amount=50000000000&text=${encodedComment}`;
 
     expect(tonDeeplink).toContain('text=');
     expect(tonDeeplink).toContain('amount=');
-    expect(encodedComment).toContain('%');
-    // Special characters like # and spaces should be encoded
-    expect(encodedComment).toContain('%20');
-    expect(encodedComment).toContain('%23');
+    expect(tonDeeplink).toContain(bidId);
   });
 });

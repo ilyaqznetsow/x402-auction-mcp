@@ -78,7 +78,7 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
   const tonDeeplink = generateTonDeeplink(
     response.pay_to,
     response.ton_amount,
-    `TPING Auction bid - ${response.bid_id.substring(0, 10)}`
+    response.bid_id
   );
 
   // Return payment instructions with status and ton deeplink
@@ -103,7 +103,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
     const tonDeeplink = generateTonDeeplink(
       data.pay_to,
       data.ton_amount,
-      `TPING Auction bid - ${data.bid_id.substring(0, 10)}`
+      data.bid_id
     );
 
     return {
