@@ -49,6 +49,16 @@ function validateLimit(limit?: number): number {
 }
 
 /**
+ * Generate TON universal deeplink for payment
+ * Format: ton://transfer/{destination}?amount={amount}&text={comment}
+ */
+function generateTonDeeplink(destination: string, amountTon: string, comment: string): string {
+  const amountInNanotons = Math.floor(parseFloat(amountTon) * 1e9);
+  const encodedComment = encodeURIComponent(comment);
+  return `ton://transfer/${destination}?amount=${amountInNanotons}&text=${encodedComment}`;
+}
+
+/**
  * Get auction info handler
  */
 export async function handleGetAuctionInfo(): Promise<AuctionInfoResponse> {
@@ -64,11 +74,19 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
 
   const response = await createBid(tonAmount, wallet);
 
-  // Return payment instructions with status
+  // Generate TON universal deeplink
+  const tonDeeplink = generateTonDeeplink(
+    response.pay_to,
+    response.ton_amount,
+    `TPING Auction bid - ${response.bid_id.substring(0, 10)}`
+  );
+
+  // Return payment instructions with status and ton deeplink
   return {
     status: HTTP_STATUS.PAYMENT_REQUIRED,
     ...response,
-    message: 'Payment required - use tonconnect_universal_link to complete',
+    ton_deeplink: tonDeeplink,
+    message: 'Payment required - use ton_deeplink or tonconnect_universal_link to complete',
   };
 }
 
@@ -81,10 +99,18 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
   const { status, data } = await checkBidById(bidId);
 
   if (status === HTTP_STATUS.PAYMENT_REQUIRED) {
+    // Generate TON universal deeplink for pending payment
+    const tonDeeplink = generateTonDeeplink(
+      data.pay_to,
+      data.ton_amount,
+      `TPING Auction bid - ${data.bid_id.substring(0, 10)}`
+    );
+
     return {
       status,
       ...data,
-      message: 'Bid payment pending - use tonconnect_universal_link to complete',
+      ton_deeplink: tonDeeplink,
+      message: 'Bid payment pending - use ton_deeplink or tonconnect_universal_link to complete',
     };
   }
 

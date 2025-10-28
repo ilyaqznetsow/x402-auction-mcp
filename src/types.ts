@@ -62,6 +62,7 @@ export interface BidRequired402Response {
   pay_to: string;
   expires_in: number;
   tonconnect_universal_link: string;
+  ton_deeplink?: string;
   maxAmountRequired: string;
   resource: string;
   description: string;

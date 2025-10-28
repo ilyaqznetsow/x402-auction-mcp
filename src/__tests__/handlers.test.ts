@@ -148,4 +148,49 @@ describe('Response Formatting', () => {
     expect(response.ton_amount).toBe('50');
     expect(response.current_price_ton).toBe('0.15');
   });
+
+  it('should generate valid ton:// deeplink', () => {
+    const destination = 'UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw';
+    const amountTon = '50';
+    const comment = 'TPING Auction bid';
+
+    const amountInNanotons = Math.floor(parseFloat(amountTon) * 1e9);
+    const encodedComment = encodeURIComponent(comment);
+    const tonDeeplink = `ton://transfer/${destination}?amount=${amountInNanotons}&text=${encodedComment}`;
+
+    expect(tonDeeplink).toContain('ton://transfer/');
+    expect(tonDeeplink).toContain(destination);
+    expect(tonDeeplink).toContain(`amount=${amountInNanotons}`);
+    expect(tonDeeplink).toContain('text=TPING%20Auction%20bid');
+  });
+
+  it('should calculate nanotons correctly', () => {
+    const testCases = [
+      { ton: '1', expectedNanotons: 1000000000 },
+      { ton: '50', expectedNanotons: 50000000000 },
+      { ton: '0.5', expectedNanotons: 500000000 },
+      { ton: '100', expectedNanotons: 100000000000 },
+    ];
+
+    testCases.forEach(({ ton, expectedNanotons }) => {
+      const nanotons = Math.floor(parseFloat(ton) * 1e9);
+      expect(nanotons).toBe(expectedNanotons);
+    });
+  });
+
+  it('should handle special characters in deeplink comment', () => {
+    const destination = 'UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw';
+    const amountTon = '50';
+    const comment = 'Auction bid #123 (special chars)';
+
+    const encodedComment = encodeURIComponent(comment);
+    const tonDeeplink = `ton://transfer/${destination}?amount=50000000000&text=${encodedComment}`;
+
+    expect(tonDeeplink).toContain('text=');
+    expect(tonDeeplink).toContain('amount=');
+    expect(encodedComment).toContain('%');
+    // Special characters like # and spaces should be encoded
+    expect(encodedComment).toContain('%20');
+    expect(encodedComment).toContain('%23');
+  });
 });
