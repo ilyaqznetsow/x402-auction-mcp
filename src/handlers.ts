@@ -50,7 +50,8 @@ function validateLimit(limit?: number): number {
 
 /**
  * Generate TON universal deeplink for payment
- * Format: ton://transfer/{destination}?amount={amount}&text={comment}
+ * Format: ton://transfer/{destination}?amount={nanotons}&text={comment}
+ * Note: amount is in nanotons (1 TON = 1e9 nanotons)
  */
 function generateTonDeeplink(destination: string, amountTon: string, comment: string): string {
   const amountInNanotons = Math.floor(parseFloat(amountTon) * 1e9);
