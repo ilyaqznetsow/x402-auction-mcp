@@ -107,7 +107,7 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
       comment: response.bid_id,
       ton_deeplink: tonDeeplink,
     },
-    message: `Bid created! Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or click ton_deeplink to pay from another device/wallet.`,
+    message: `Payment required. Click to pay: ${tonDeeplink} or send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}".`,
   };
 }
 
@@ -131,7 +131,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
       status: 'payment_required',
       ...data,
       ton_deeplink: tonDeeplink,
-      message: `Bid payment pending. Send ${data.ton_amount} TON to ${data.pay_to} with comment "${data.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
+      message: `Payment pending. Click to pay: ${tonDeeplink} or send ${data.ton_amount} TON to ${data.pay_to} with comment "${data.bid_id}".`,
     };
   }
 
@@ -157,7 +157,7 @@ export async function handleGetMyBid(wallet: string): Promise<any> {
   validateWallet(wallet);
   const bid = await getMyBid(wallet);
 
-  // If payment is still pending, get payment details from checkBidById
+  // Handle pending payment status
   if (bid.status === 'pending') {
     const { status, data } = await checkBidById(bid.bid_id);
     
@@ -172,11 +172,44 @@ export async function handleGetMyBid(wallet: string): Promise<any> {
         ...bid,
         ton_deeplink: tonDeeplink,
         pay_to: data.pay_to,
-        message: `Payment still pending. Click ton_deeplink to pay or send ${bid.ton_amount} TON to ${data.pay_to} with comment "${bid.bid_id}".`,
+        message: `Payment pending. Click to pay: ${tonDeeplink} or send ${bid.ton_amount} TON to ${data.pay_to} with comment "${bid.bid_id}".`,
       };
     }
   }
 
+  // Handle completed status
+  if (bid.status === 'completed') {
+    return {
+      ...bid,
+      message: `Bid payment completed. Awaiting allocation.`,
+    };
+  }
+
+  // Handle allocated status
+  if (bid.status === 'allocated') {
+    return {
+      ...bid,
+      message: `Bid allocated successfully. You received ${bid.allocated_tping} tokens.`,
+    };
+  }
+
+  // Handle refunded status
+  if (bid.status === 'refunded') {
+    return {
+      ...bid,
+      message: `Bid refunded. You received ${bid.refund_ton} TON back.`,
+    };
+  }
+
+  // Handle expired status
+  if (bid.status === 'expired') {
+    return {
+      ...bid,
+      message: `Bid payment expired.`,
+    };
+  }
+
+  // Return as-is for any other status
   return bid;
 }
 
