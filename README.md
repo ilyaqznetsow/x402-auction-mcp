@@ -53,18 +53,49 @@ Add this to your Claude Desktop configuration file:
 
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
+#### Option 1: Using npm package (Recommended if published)
+
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "x402-auction-mcp"
+    }
+  }
+}
+```
+
+#### Option 2: Local development
+
 ```json
 {
   "mcpServers": {
     "x402-auction": {
       "command": "node",
-      "args": ["/Users/base/Documents/GitHub/x402agent/build/index.js"]
+      "args": ["/path/to/x402-auction-mcp/build/index.js"]
     }
   }
 }
 ```
 
 Make sure to update the path to match your actual installation location.
+
+#### Option 3: Using npm link (for development)
+
+```bash
+# In the x402-auction-mcp directory
+npm link
+
+# Then in Claude Desktop config:
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "x402-auction-mcp"
+    }
+  }
+}
+```
 
 ## Available Tools
 
