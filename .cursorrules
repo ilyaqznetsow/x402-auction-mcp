@@ -1,0 +1,35 @@
+# x420 Auction MCP Project Rules
+
+## Code Style
+- Follow KISS (Keep It Simple, Stupid) principles
+- Follow SOLID principles
+- Keep functions small and focused
+- Use descriptive names
+- Avoid unnecessary complexity
+
+## Architecture
+- `index.ts` - MCP server routing only
+- `handlers.ts` - Business logic and validation
+- `api.ts` - HTTP communication only
+- `types.ts` - Type definitions
+- `constants.ts` - Configuration values
+
+## Adding New Features
+1. Add constants to `constants.ts`
+2. Add types to `types.ts`
+3. Add API function to `api.ts`
+4. Add handler to `handlers.ts`
+5. Add tool and route to `index.ts`
+
+## Testing Changes
+```bash
+npm run build
+node build/index.js  # Should print "x420 Auction MCP Server running on stdio"
+```
+
+## Principles
+- Single Responsibility: Each file has ONE job
+- Open/Closed: Easy to extend, hard to break
+- Simple error handling: Consistent patterns
+- No deep nesting: Keep it flat
+
