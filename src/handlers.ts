@@ -73,6 +73,10 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
   validateBidAmount(tonAmount);
   validateWallet(wallet);
 
+  // Get current auction info for context
+  const auctionInfo = await getAuctionInfo();
+
+  // Create the bid
   const response = await createBid(tonAmount, wallet);
 
   // Generate TON universal deeplink
@@ -82,12 +86,28 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
     response.bid_id
   );
 
-  // Return payment instructions with ton deeplink
+  // Return complete bid information with auction context and payment instructions
   return {
     status: 'payment_required',
-    ...response,
-    ton_deeplink: tonDeeplink,
-    message: `Payment required. Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
+    bid: {
+      bid_id: response.bid_id,
+      ton_amount: response.ton_amount,
+      estimated_tping: response.estimated_tping,
+      expires_at: response.expiresAt,
+    },
+    auction: {
+      auction_id: auctionInfo.auction_id,
+      current_price_ton: auctionInfo.current_price_ton,
+      total_raised_ton: auctionInfo.total_raised_ton,
+      progress_percent: auctionInfo.progress_percent,
+    },
+    payment: {
+      pay_to: response.pay_to,
+      amount: response.ton_amount,
+      comment: response.bid_id,
+      ton_deeplink: tonDeeplink,
+    },
+    message: `Bid created! Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or click ton_deeplink to pay from another device/wallet.`,
   };
 }
 
@@ -133,9 +153,31 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
 /**
  * Get user's bid handler
  */
-export async function handleGetMyBid(wallet: string): Promise<MyBidInfo> {
+export async function handleGetMyBid(wallet: string): Promise<any> {
   validateWallet(wallet);
-  return await getMyBid(wallet);
+  const bid = await getMyBid(wallet);
+
+  // If payment is still pending, get payment details from checkBidById
+  if (bid.status === 'pending') {
+    const { status, data } = await checkBidById(bid.bid_id);
+    
+    if (status === HTTP_STATUS.PAYMENT_REQUIRED && data.pay_to) {
+      const tonDeeplink = generateTonDeeplink(
+        data.pay_to,
+        data.ton_amount,
+        data.bid_id
+      );
+
+      return {
+        ...bid,
+        ton_deeplink: tonDeeplink,
+        pay_to: data.pay_to,
+        message: `Payment still pending. Click ton_deeplink to pay or send ${bid.ton_amount} TON to ${data.pay_to} with comment "${bid.bid_id}".`,
+      };
+    }
+  }
+
+  return bid;
 }
 
 /**
