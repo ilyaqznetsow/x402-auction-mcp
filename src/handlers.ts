@@ -82,9 +82,9 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
     response.bid_id
   );
 
-  // Return payment instructions with status and ton deeplink
+  // Return payment instructions with ton deeplink
   return {
-    status: HTTP_STATUS.PAYMENT_REQUIRED,
+    status: 'payment_required',
     ...response,
     ton_deeplink: tonDeeplink,
     message: `Payment required. Send ${response.ton_amount} TON to ${response.pay_to} with comment "${response.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
@@ -108,7 +108,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
     );
 
     return {
-      status,
+      status: 'payment_required',
       ...data,
       ton_deeplink: tonDeeplink,
       message: `Bid payment pending. Send ${data.ton_amount} TON to ${data.pay_to} with comment "${data.bid_id}". Or use ton_deeplink to pay from another device/wallet.`,
@@ -117,7 +117,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
 
   if (status === HTTP_STATUS.GONE) {
     return {
-      status,
+      status: 'auction_closed',
       ...data,
       message: 'Auction has closed',
     };
@@ -125,7 +125,7 @@ export async function handleCheckBidById(bidId: string): Promise<any> {
 
   // 200 OK - bid exists with status
   return {
-    status: HTTP_STATUS.OK,
+    status: data.status || 'unknown',
     ...data,
   };
 }
