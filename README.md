@@ -209,5 +209,33 @@ For more information about the x420 auction, visit [Palette Finance](https://x42
 
 ## Deployment
 
-This server can run locally or be deployed to Render for public access.
+This is an MCP server designed to run locally with Claude Desktop via stdio protocol.
+
+### Local Setup
+
+1. **Configure Claude Desktop** (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "node",
+      "args": ["/Users/base/Documents/GitHub/x420agent/build/index.js"]
+    }
+  }
+}
+```
+
+2. **Restart Claude Desktop**
+
+3. **Start using the tools** - Ask Claude about auction status!
+
+### Publishing to GitHub
+
+To share your work:
+
+```bash
+git remote add origin https://github.com/yourusername/x402-auction-mcp.git
+git push -u origin main
+```
 
