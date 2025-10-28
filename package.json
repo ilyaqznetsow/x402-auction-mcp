@@ -37,7 +37,7 @@
     "ton",
     "blockchain"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "gn402",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4"
