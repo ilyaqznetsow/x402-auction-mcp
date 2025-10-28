@@ -218,7 +218,7 @@ npm install -g x402-auction-mcp
 
 **Option 2: Install from GitHub**
 ```bash
-git clone https://github.com/yourusername/x402-auction-mcp.git
+git clone https://github.com/ilyaqznetsow/x402-auction-mcp.git
 cd x402-auction-mcp
 npm install
 npm run build
