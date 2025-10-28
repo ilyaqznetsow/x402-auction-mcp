@@ -23,12 +23,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/x402-auction-mcp.git"
+    "url": "git+https://github.com/ilyaqznetsow/x402-auction-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/x402-auction-mcp/issues"
+    "url": "https://github.com/ilyaqznetsow/x402-auction-mcp/issues"
   },
-  "homepage": "https://github.com/yourusername/x402-auction-mcp#readme",
+  "homepage": "https://github.com/ilyaqznetsow/x402-auction-mcp#readme",
   "keywords": [
     "mcp",
     "model-context-protocol",
