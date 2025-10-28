@@ -1,4 +1,4 @@
-# x420 Auction MCP Project Rules
+# x402 Auction MCP Project Rules
 
 ## Code Style
 - Follow KISS (Keep It Simple, Stupid) principles
@@ -24,7 +24,7 @@
 ## Testing Changes
 ```bash
 npm run build
-node build/index.js  # Should print "x420 Auction MCP Server running on stdio"
+node build/index.js  # Should print "x402 Auction MCP Server running on stdio"
 ```
 
 ## Principles

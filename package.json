@@ -4,17 +4,40 @@
   "description": "MCP server for x402 auction participation",
   "type": "module",
   "main": "build/index.js",
+  "bin": {
+    "x402-auction-mcp": "build/index.js"
+  },
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "dev": "tsc && node build/index.js"
+    "dev": "tsc && node build/index.js",
+    "prepublishOnly": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/x402-auction-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/x402-auction-mcp/issues"
+  },
+  "homepage": "https://github.com/yourusername/x402-auction-mcp#readme",
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "auction",
-    "x402"
+    "x402",
+    "claude",
+    "ai-agent",
+    "palette-finance",
+    "ton",
+    "blockchain"
   ],
-  "author": "",
+  "author": "Your Name <your.email@example.com>",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4"

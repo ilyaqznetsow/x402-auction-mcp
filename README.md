@@ -1,6 +1,6 @@
-# x420 Auction MCP Server
+# x402 Auction MCP Server
 
-A **simple**, **clean** MCP server that enables AI agents to participate in x420 auctions.
+A **simple**, **clean** MCP server that enables AI agents to participate in x402 auctions.
 
 **🎯 Built with KISS & SOLID principles | 343 lines of code | 4 API endpoints**
 
@@ -152,7 +152,7 @@ Get list of recent completed bids.
 
 ## API Endpoints
 
-This MCP server interfaces with the following x420 auction API endpoints:
+This MCP server interfaces with the following x402 auction API endpoints:
 
 - `GET /api/auction/info` - Auction status
 - `GET /api/auction/bid` - Create bid (returns 402)
@@ -172,7 +172,7 @@ This MCP server interfaces with the following x420 auction API endpoints:
 The project structure:
 
 ```
-x420agent/
+x402agent/
 ├── src/
 │   ├── index.ts       # MCP server (routing)
 │   ├── handlers.ts    # Business logic & validation
@@ -203,39 +203,194 @@ MIT
 
 ## API Reference
 
-Base URL: `https://x420.palette.finance/api/auction`
+Base URL: `https://x402.palette.finance/api/auction`
 
-For more information about the x420 auction, visit [Palette Finance](https://x420.palette.finance).
+For more information about the x402 auction, visit [Palette Finance](https://x402.palette.finance).
 
-## Deployment
+## Installation
 
-This is an MCP server designed to run locally with Claude Desktop via stdio protocol.
+### For End Users
 
-### Local Setup
+**Option 1: Install from npm (when published)**
+```bash
+npm install -g x402-auction-mcp
+```
 
-1. **Configure Claude Desktop** (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`):
+**Option 2: Install from GitHub**
+```bash
+git clone https://github.com/yourusername/x402-auction-mcp.git
+cd x402-auction-mcp
+npm install
+npm run build
+```
 
+---
+
+## Usage in Different Environments
+
+### 1. Claude Desktop
+
+**Config file location:**
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+**If installed globally via npm:**
 ```json
 {
   "mcpServers": {
     "x402-auction": {
-      "command": "node",
-      "args": ["/Users/base/Documents/GitHub/x420agent/build/index.js"]
+      "command": "x402-auction-mcp"
     }
   }
 }
 ```
 
-2. **Restart Claude Desktop**
-
-3. **Start using the tools** - Ask Claude about auction status!
-
-### Publishing to GitHub
-
-To share your work:
-
-```bash
-git remote add origin https://github.com/yourusername/x402-auction-mcp.git
-git push -u origin main
+**If installed locally:**
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "node",
+      "args": ["/absolute/path/to/x402-auction-mcp/build/index.js"]
+    }
+  }
+}
 ```
+
+Then restart Claude Desktop.
+
+---
+
+### 2. Cursor IDE
+
+Cursor supports MCP servers! Configure in Cursor's settings:
+
+**Settings → MCP Servers** or create/edit the config file:
+- macOS: `~/Library/Application Support/Cursor/mcp_config.json`
+- Windows: `%APPDATA%\Cursor\mcp_config.json`
+- Linux: `~/.config/Cursor/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "npx",
+      "args": ["x402-auction-mcp"]
+    }
+  }
+}
+```
+
+Or with local installation:
+```json
+{
+  "mcpServers": {
+    "x402-auction": {
+      "command": "node",
+      "args": ["/absolute/path/to/x402-auction-mcp/build/index.js"]
+    }
+  }
+}
+```
+
+Restart Cursor, then use the MCP tools in your AI chat!
+
+---
+
+### 3. Cline (VS Code Extension)
+
+Cline supports MCP servers via settings:
+
+1. Open VS Code Settings (Cmd/Ctrl + ,)
+2. Search for "Cline MCP"
+3. Add MCP server configuration:
+
+```json
+{
+  "cline.mcpServers": {
+    "x402-auction": {
+      "command": "x402-auction-mcp"
+    }
+  }
+}
+```
+
+Or edit `.vscode/settings.json` in your workspace.
+
+---
+
+### 4. Programmatic Usage (Node.js)
+
+You can also use the MCP server programmatically in your own applications:
+
+```javascript
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+
+// Connect to the MCP server
+const transport = new StdioClientTransport({
+  command: 'x402-auction-mcp'
+});
+
+const client = new Client({
+  name: 'my-app',
+  version: '1.0.0'
+}, {
+  capabilities: {}
+});
+
+await client.connect(transport);
+
+// List available tools
+const tools = await client.listTools();
+console.log(tools);
+
+// Call a tool
+const result = await client.callTool({
+  name: 'get_auction_info',
+  arguments: {}
+});
+
+console.log(result);
+```
+
+---
+
+### 5. Any MCP-Compatible Client
+
+The server uses the standard MCP stdio protocol, so it works with any client that supports MCP:
+
+**Basic usage:**
+```bash
+# Start the server (it reads from stdin, writes to stdout)
+x402-auction-mcp
+
+# Or with node directly:
+node /path/to/build/index.js
+```
+
+**Communication format:** JSON-RPC 2.0 over stdio
+
+Example request:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_auction_info",
+    "arguments": {}
+  }
+}
+```
+
+---
+
+## For Developers: Publishing Your Fork
+
+See [PUBLISHING.md](PUBLISHING.md) for detailed instructions on:
+- Publishing to npm
+- Publishing to GitHub
+- Versioning and updates
+- Marketing your MCP server
 
