@@ -116,7 +116,11 @@ WORKFLOW:
 1. Verify auction active (get_auction_info)
 2. Collect: amount (${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON}) + wallet address
 3. Call create_auction_bid
-4. If status="payment_required": Use payment.deeplink, show recipient + comment + expiry
+4. If status="payment_required":
+   - Present payment.deeplink as a CLICKABLE LINK (not QR code)
+   - Explain: "Click this link to open your TON wallet and complete payment"
+   - Show: recipient address, exact amount, required comment (bid_id)
+   - Display: time remaining (expires_in_seconds)
 5. If urgency="critical": Emphasize time sensitivity (expires_in_seconds < 60)
 6. If status="completed"/"allocated": Inform user of current state
 
@@ -154,8 +158,9 @@ WHEN TO USE:
 
 BID STATUSES:
 1. payment_pending: Payment not received, window open
-   → Show payment instructions + urgency if expires_in < 60s
-   → Use payment.deeplink for quick payment
+   → Present payment.deeplink as CLICKABLE LINK (opens TON wallet)
+   → Show recipient, amount, required comment (bid_id), time remaining
+   → Emphasize urgency if expires_in < 60s
 
 2. expired: Payment window closed without payment
    → Bid invalid, suggest new bid (price may have changed)
@@ -183,11 +188,13 @@ RESPONSE STRUCTURE:
 }
 
 WORKFLOW:
-- payment_pending + expires_in < 300s: Emphasize urgency, use deeplink
+- payment_pending + expires_in < 300s: Present deeplink as clickable link, emphasize urgency
 - completed: Reassure user, explain waiting for allocation
 - allocated: Celebrate success, show token amount
 - refunded: Explain auction failure, confirm refund
-- expired: Offer to create new bid if auction still active`,
+- expired: Offer to create new bid if auction still active
+
+IMPORTANT: payment.deeplink is a TonConnect URL - present it as a clickable link, NOT a QR code`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -239,8 +246,10 @@ WORKFLOW:
 1. Call before create_auction_bid to check existing bid
 2. If 404: Wallet free, proceed with new bid
 3. If found: Show status, don't create duplicate
-4. For pending: Show payment link with urgency
-5. For completed/allocated: Show appropriate status message`,
+4. For pending: Present payment.deeplink as CLICKABLE LINK with urgency
+5. For completed/allocated: Show appropriate status message
+
+IMPORTANT: payment.deeplink opens user's TON wallet - it's a clickable URL, not a QR code`,
     inputSchema: {
       type: 'object',
       properties: {

@@ -187,6 +187,7 @@ export interface PaymentInfo {
   amount?: string;
   comment_required?: string;
   deeplink?: string;
+  deeplink_instructions?: string;
   paymentId?: string;
   expires_in_seconds?: number;
   network?: string;
