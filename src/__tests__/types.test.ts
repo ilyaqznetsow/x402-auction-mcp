@@ -56,9 +56,10 @@ describe('Type Interfaces', () => {
       target_ton: '1000',
       total_raised_ton: '500',
       progress_percent: '50.00',
-      auction_supply_tping: '10000',
+      auction_supply_token: '10000',
       started_at: '2024-01-01T00:00:00Z',
       tokens_per_ton: 6666.67,
+      token_name: 'TEST',
     };
 
     // Type checking happens at compile time
@@ -74,13 +75,13 @@ describe('Type Interfaces', () => {
       bid_id: 'bid-456',
       ton_amount: '50',
       current_price_ton: '0.15',
-      estimated_tping: 333.33,
+      estimated_token: 333.33,
       pay_to: 'UQ...',
       expires_in: 180,
       tonconnect_universal_link: 'tc://...',
       maxAmountRequired: '100',
       resource: '/api/auction/bid',
-      description: 'Participation in TPING auction',
+      description: 'Participation in token auction',
       asset: 'EQAAAA...',
       assetType: 'TON',
       expiresAt: '2024-01-01T00:03:00Z',
