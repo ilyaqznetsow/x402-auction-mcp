@@ -329,7 +329,7 @@ PRESENTATION EXAMPLES:
 const server = new Server(
   {
     name: 'x402-auction-mcp',
-    version: '1.1.0',
+    version: '1.1.1',
   },
   {
     capabilities: {
