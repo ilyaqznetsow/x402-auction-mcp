@@ -45,6 +45,17 @@ Or for development with auto-rebuild:
 npm run dev
 ```
 
+### Troubleshooting
+
+If you experience issues with multiple instances or stuck processes:
+
+```bash
+# Clean up any running instances
+npm run cleanup
+```
+
+This will safely terminate any existing x402-auction-mcp processes.
+
 ### Configuring with Claude Desktop
 
 Add this to your Claude Desktop configuration file:

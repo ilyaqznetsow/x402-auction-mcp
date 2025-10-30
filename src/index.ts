@@ -337,6 +337,34 @@ PRESENTATION EXAMPLES:
 );
 
 /**
+ * Graceful shutdown handler
+ */
+let isShuttingDown = false;
+
+async function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  
+  console.error(`Received ${signal}, shutting down gracefully...`);
+  process.exit(0);
+}
+
+// Handle termination signals
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+/**
  * Start the server
  */
 async function main() {
