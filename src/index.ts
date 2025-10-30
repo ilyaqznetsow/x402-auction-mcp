@@ -3,17 +3,17 @@
 /**
  * x402 Auction MCP Server
  * Provides tools for AI agents to participate in x402 auctions
+ * 
+ * UNIVERSAL DATA-ONLY ARCHITECTURE:
+ * All tools return ONLY structured data, NO prose/messages.
+ * Agents compose their own messages in any language/style.
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-} from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 
-import { BID_LIMITS, DEFAULT_BIDS_LIMIT, HTTP_STATUS } from './constants.js';
+import { BID_LIMITS, DEFAULT_BIDS_LIMIT } from './constants.js';
 import {
   handleGetAuctionInfo,
   handleCreateBid,
@@ -24,37 +24,20 @@ import {
 import type { StandardMCPResponse, AuctionInfoResponse, RecentBidsResponse } from './types.js';
 
 /**
- * API Error structure
+ * Create and configure the MCP server
  */
-interface ApiError {
-  message?: string;
-  error?: string;
-  code?: number;
-  status?: number;
-  details?: unknown;
-}
-
+const server = new McpServer({
+  name: 'x402-auction-mcp',
+  version: '1.1.2',
+});
 
 /**
- * Tool definitions for the MCP server
- * 
- * UNIVERSAL DATA-ONLY ARCHITECTURE:
- * All tools return ONLY structured data, NO prose/messages.
- * Agents compose their own messages in any language/style.
- * 
- * Response Structure:
- * - status: Current state (enum/code)
- * - action_required: What user must do ("payment", "wait", "none", etc)
- * - urgency: Time sensitivity ("critical", "high", "normal")
- * - next_step: Next action code ("send_payment", "check_wallet", etc)
- * - Pure data fields: All business data (amounts, prices, timestamps)
- * - Metadata objects: auction{}, payment{}, allocation{}, refund{}
- * 
- * NO hardcoded messages = Works in ANY language for ANY agent
+ * Register get_auction_info tool
  */
-const TOOLS: Tool[] = [
+server.registerTool(
+  'get_auction_info',
   {
-    name: 'get_auction_info',
+    title: 'Get Auction Info',
     description: `[REQUIRED FIRST STEP] Retrieve comprehensive auction status including current Dutch auction pricing, fundraising progress, and token economics.
     
     WHEN TO USE:
@@ -78,14 +61,24 @@ const TOOLS: Tool[] = [
     4. Use current_price_ton to explain cost before bidding
     
     MECHANISM: Dutch ascending auction - price increases as more TON is raised toward target. Users lock in the price at time of bid (pay-as-bid model).`,
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
+    inputSchema: {},
   },
+  async () => {
+    const result = await handleGetAuctionInfo();
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      structuredContent: result,
+    };
+  }
+);
+
+/**
+ * Register create_auction_bid tool
+ */
+server.registerTool(
+  'create_auction_bid',
   {
-    name: 'create_auction_bid',
+    title: 'Create Auction Bid',
     description: `Place a bid in the x402 token auction.
 
 PREREQUISITE: Call get_auction_info first to verify auction is active.
@@ -129,26 +122,31 @@ ERRORS:
 - invalid_amount (422): Amount outside ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} range
 - auction_closed (410): Auction ended, no new bids`,
     inputSchema: {
-      type: 'object',
-      properties: {
-        ton_amount: {
-          type: 'number',
-          description: `Amount of TON to bid. Range: ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} TON. This is maximum payment - partial refunds possible if oversubscribed or target not reached.`,
-          minimum: BID_LIMITS.MIN_TON,
-          maximum: BID_LIMITS.MAX_TON,
-          examples: [1, 5, 10, 50, 100],
-        },
-        wallet: {
-          type: 'string',
-          description: 'TON wallet address in normalized format. Examples: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". This address receives tokens if successful, or refunds if applicable.',
-          pattern: '^(UQ|EQ)[A-Za-z0-9_-]{48}$',
-        },
-      },
-      required: ['ton_amount', 'wallet'],
+      ton_amount: z.number()
+        .min(BID_LIMITS.MIN_TON)
+        .max(BID_LIMITS.MAX_TON)
+        .describe(`Amount of TON to bid. Range: ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} TON. This is maximum payment - partial refunds possible if oversubscribed or target not reached.`),
+      wallet: z.string()
+        .regex(/^(UQ|EQ)[A-Za-z0-9_-]{48}$/)
+        .describe('TON wallet address in normalized format. Examples: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". This address receives tokens if successful, or refunds if applicable.'),
     },
   },
+  async ({ ton_amount, wallet }) => {
+    const result = await handleCreateBid(ton_amount, wallet);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      structuredContent: result,
+    };
+  }
+);
+
+/**
+ * Register check_bid_status tool
+ */
+server.registerTool(
+  'check_bid_status',
   {
-    name: 'check_bid_status',
+    title: 'Check Bid Status',
     description: `Check status of a specific bid by its ID.
 
 WHEN TO USE:
@@ -196,20 +194,27 @@ WORKFLOW:
 
 IMPORTANT: payment.deeplink is a TonConnect URL - present it as a clickable link, NOT a QR code`,
     inputSchema: {
-      type: 'object',
-      properties: {
-        bid_id: {
-          type: 'string',
-          description: 'Unique bid ID returned when creating a bid. Format: "bid_XXXXXXXXXX" (e.g., "bid_1234567890"). Found in create_auction_bid response.',
-          pattern: '^bid_[A-Za-z0-9]+$',
-          examples: ['bid_1234567890', 'bid_abc123def456'],
-        },
-      },
-      required: ['bid_id'],
+      bid_id: z.string()
+        .regex(/^bid_[A-Za-z0-9]+$/)
+        .describe('Unique bid ID returned when creating a bid. Format: "bid_XXXXXXXXXX" (e.g., "bid_1234567890"). Found in create_auction_bid response.'),
     },
   },
+  async ({ bid_id }) => {
+    const result = await handleCheckBidById(bid_id);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      structuredContent: result,
+    };
+  }
+);
+
+/**
+ * Register get_my_bid tool
+ */
+server.registerTool(
+  'get_my_bid',
   {
-    name: 'get_my_bid',
+    title: 'Get My Bid',
     description: `Lookup bid by wallet address. Use to check participation without knowing bid_id.
 
 WHEN TO USE:
@@ -251,20 +256,27 @@ WORKFLOW:
 
 IMPORTANT: payment.deeplink opens user's TON wallet - it's a clickable URL, not a QR code`,
     inputSchema: {
-      type: 'object',
-      properties: {
-        wallet: {
-          type: 'string',
-          description: 'TON wallet address to check for existing bids. Normalized format: "UQBlen..." or "EQAbc...". Example: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw".',
-          pattern: '^(UQ|EQ)[A-Za-z0-9_-]{48}$',
-          examples: ['UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw', 'EQAbc123...'],
-        },
-      },
-      required: ['wallet'],
+      wallet: z.string()
+        .regex(/^(UQ|EQ)[A-Za-z0-9_-]{48}$/)
+        .describe('TON wallet address to check for existing bids. Normalized format: "UQBlen..." or "EQAbc...". Example: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw".'),
     },
   },
+  async ({ wallet }) => {
+    const result = await handleGetMyBid(wallet);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      structuredContent: result,
+    };
+  }
+);
+
+/**
+ * Register get_recent_bids tool
+ */
+server.registerTool(
+  'get_recent_bids',
   {
-    name: 'get_recent_bids',
+    title: 'Get Recent Bids',
     description: `Get list of recent bids to show auction activity and social proof.
 
 WHEN TO USE:
@@ -307,157 +319,22 @@ PRESENTATION EXAMPLES:
 - "Prices locked: 0.45-0.52 TON per token (current: 0.50)"
 - Never show full wallet addresses`,
     inputSchema: {
-      type: 'object',
-      properties: {
-        limit: {
-          type: 'number',
-          description: `Number of recent bids to return. Range: 1-100. Default: ${DEFAULT_BIDS_LIMIT}. Use 10-20 for quick context, 50-100 for detailed analysis.`,
-          minimum: 1,
-          maximum: 100,
-          default: DEFAULT_BIDS_LIMIT,
-          examples: [10, 20, 50, 100],
-        },
-      },
-      required: [],
+      limit: z.number()
+        .min(1)
+        .max(100)
+        .optional()
+        .default(DEFAULT_BIDS_LIMIT)
+        .describe(`Number of recent bids to return. Range: 1-100. Default: ${DEFAULT_BIDS_LIMIT}. Use 10-20 for quick context, 50-100 for detailed analysis.`),
     },
   },
-];
-
-/**
- * Create and configure the MCP server
- */
-const server = new Server(
-  {
-    name: 'x402-auction-mcp',
-    version: '1.1.1',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
+  async ({ limit }) => {
+    const result = await handleGetRecentBids(limit);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      structuredContent: result,
+    };
   }
 );
-
-/**
- * Format successful response
- */
-function formatResponse(data: StandardMCPResponse | AuctionInfoResponse | RecentBidsResponse) {
-  return {
-    content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
-  };
-}
-
-/**
- * Structured error response
- */
-interface ErrorResponse {
-  error: string;
-  message: string;
-  code?: number;
-  details?: unknown;
-  retryable?: boolean;
-  action_required?: string;
-}
-
-/**
- * Format error response with structured error information
- */
-function formatError(error: unknown) {
-  const apiError = error as ApiError;
-  const errorMessage = apiError.message || apiError.error || 'An error occurred';
-  const errorCode = apiError.code || apiError.error || 'UNKNOWN_ERROR';
-  const httpStatus = apiError.code || apiError.status || 500;
-
-  // Structured error response for better agent parsing
-  const errorResponse: ErrorResponse = {
-    error: String(errorCode),
-    message: errorMessage,
-    code: httpStatus,
-  };
-
-  // Add details if available
-  if (apiError.details) {
-    errorResponse.details = apiError.details;
-  }
-
-  // Determine if error is retryable
-  if (httpStatus >= 500 || httpStatus === 429) {
-    errorResponse.retryable = true;
-  } else {
-    errorResponse.retryable = false;
-  }
-
-  // Add action hints for common errors
-  if (errorCode === 'no_active_auction' || errorCode === 'no_auction') {
-    errorResponse.action_required = 'check_auction_status';
-  } else if (errorCode === 'invalid_amount') {
-    errorResponse.action_required = 'adjust_amount';
-  } else if (errorCode === 'auction_closed') {
-    errorResponse.action_required = 'check_auction_status';
-  } else if (errorCode === 'bid_not_found') {
-    errorResponse.action_required = 'verify_bid_id';
-  }
-
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(errorResponse, null, 2),
-      },
-    ],
-    isError: true,
-  };
-}
-
-/**
- * Handle tool list requests
- */
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return { tools: TOOLS };
-});
-
-/**
- * Handle tool execution requests
- */
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args = {} } = request.params;
-
-  try {
-    let result: StandardMCPResponse | AuctionInfoResponse | RecentBidsResponse;
-
-    switch (name) {
-      case 'get_auction_info':
-        result = await handleGetAuctionInfo();
-        break;
-
-      case 'create_auction_bid':
-        result = await handleCreateBid(
-          args.ton_amount as number, 
-          args.wallet as string
-        );
-        break;
-
-      case 'check_bid_status':
-        result = await handleCheckBidById(args.bid_id as string);
-        break;
-
-      case 'get_my_bid':
-        result = await handleGetMyBid(args.wallet as string);
-        break;
-
-      case 'get_recent_bids':
-        result = await handleGetRecentBids(args.limit as number | undefined);
-        break;
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
-
-    return formatResponse(result);
-  } catch (error: unknown) {
-    return formatError(error);
-  }
-});
 
 /**
  * Start the server

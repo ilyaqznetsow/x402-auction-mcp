@@ -20,6 +20,7 @@ export enum BidStatus {
 
 // Auction Info Response
 export interface AuctionInfoResponse {
+  [key: string]: unknown;
   auction_id: string;
   status: string;
   start_price_ton: string;
@@ -47,6 +48,7 @@ export interface BidEntry {
 }
 
 export interface RecentBidsResponse {
+  [key: string]: unknown;
   bids: BidEntry[];
   current_price: string;
 }
@@ -231,6 +233,7 @@ export interface PriceComparisonInfo {
 
 // Standardized MCP Response Types for Agent Compatibility
 export interface StandardMCPResponse {
+  [key: string]: unknown;
   status: string;
   action_required: 'payment' | 'wait' | 'none' | 'create_new_bid' | 'check_wallet' | 'unknown';
   urgency?: 'critical' | 'high' | 'normal';

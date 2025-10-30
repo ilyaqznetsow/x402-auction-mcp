@@ -1,6 +1,6 @@
 {
   "name": "x402-auction-mcp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "MCP server for x402 auction participation",
   "type": "module",
   "main": "build/index.js",
@@ -43,7 +43,8 @@
   "author": "gn402",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4"
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
@@ -53,4 +54,3 @@
     "typescript": "^5.3.3"
   }
 }
-
