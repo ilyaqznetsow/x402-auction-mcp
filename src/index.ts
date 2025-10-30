@@ -28,7 +28,7 @@ import type { StandardMCPResponse, AuctionInfoResponse, RecentBidsResponse } fro
  */
 const server = new McpServer({
   name: 'x402-auction-mcp',
-  version: '1.1.2',
+  version: '1.1.3',
 });
 
 /**
