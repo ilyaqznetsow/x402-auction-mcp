@@ -127,8 +127,8 @@ ERRORS:
         .max(BID_LIMITS.MAX_TON)
         .describe(`Amount of TON to bid. Range: ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} TON. This is maximum payment - partial refunds possible if oversubscribed or target not reached.`),
       wallet: z.string()
-        .regex(/^(UQ|EQ)[A-Za-z0-9_-]{48}$/)
-        .describe('TON wallet address in normalized format. Examples: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". This address receives tokens if successful, or refunds if applicable.'),
+        .regex(/^((UQ|EQ)[A-Za-z0-9_-]{44,48}|(-1|0):[a-fA-F0-9]{64})$/)
+        .describe('TON wallet address in user-friendly or raw format. User-friendly: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". Raw: "0:abc123..." or "-1:abc123...". This address receives tokens if successful, or refunds if applicable.'),
     },
   },
   async ({ ton_amount, wallet }) => {
@@ -257,8 +257,8 @@ WORKFLOW:
 IMPORTANT: payment.deeplink opens user's TON wallet - it's a clickable URL, not a QR code`,
     inputSchema: {
       wallet: z.string()
-        .regex(/^(UQ|EQ)[A-Za-z0-9_-]{48}$/)
-        .describe('TON wallet address to check for existing bids. Normalized format: "UQBlen..." or "EQAbc...". Example: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw".'),
+        .regex(/^((UQ|EQ)[A-Za-z0-9_-]{44,48}|(-1|0):[a-fA-F0-9]{64})$/)
+        .describe('TON wallet address to check for existing bids. User-friendly format: "UQBlen..." or "EQAbc...". Raw format: "0:abc123..." or "-1:abc123...". Example: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "0:89f356bd10b3c8609187c5abcd7bb1d5840c7f8a88e73debff8e64ffd8f12010".'),
     },
   },
   async ({ wallet }) => {
