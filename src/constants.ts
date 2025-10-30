@@ -17,6 +17,7 @@ export const HTTP_STATUS = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   GONE: 410,
+  RATE_LIMITED: 420,
   INVALID_AMOUNT: 422,
   INTERNAL_ERROR: 500,
 } as const;
@@ -30,6 +31,9 @@ export const BID_LIMITS = {
 export const DEFAULT_BIDS_LIMIT = 20;
 export const MAX_BIDS_LIMIT = 100;
 
+// Calm token storage (in-memory for simplicity)
+export const CALM_TOKENS = new Map<string, { token: string; expiresAt: number }>();
+
 // Error codes
 export const ERROR_CODES = {
   NO_AUCTION: 'no_auction',
@@ -39,6 +43,7 @@ export const ERROR_CODES = {
   INVALID_AMOUNT: 'invalid_amount',
   MISSING_WALLET: 'missing_wallet',
   BID_NOT_FOUND: 'bid_not_found',
+  RATE_LIMITED: 'rate_limited',
   INTERNAL_ERROR: 'internal_error',
 } as const;
 

@@ -165,6 +165,15 @@ export interface ApiErrorResponse {
   code?: number;
 }
 
+// Rate limiting response (HTTP 420)
+export interface EnhanceYourCalm420Response {
+  error: 'rate_limit_exceeded';
+  message: string;
+  retry_after: number;
+  calm_token: string;
+  calm_token_expires_in: number;
+}
+
 // Nested types for StandardMCPResponse
 export interface BidInfo {
   bid_id: string;

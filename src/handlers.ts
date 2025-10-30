@@ -18,6 +18,7 @@ import type {
   BidAllocatedResponse,
   BidRefundedResponse,
   AuctionClosed410Response,
+  EnhanceYourCalm420Response,
 } from './types.js';
 
 /**
@@ -249,61 +250,142 @@ export async function handleCreateBid(tonAmount: number, wallet: string): Promis
 export async function handleCheckBidById(bidId: string): Promise<StandardMCPResponse> {
   validateBidId(bidId);
 
-  const { status, data } = await checkBidById(bidId);
+  try {
+    const { status, data } = await checkBidById(bidId);
 
-  if (status === HTTP_STATUS.PAYMENT_REQUIRED) {
-    const paymentData = data as BidRequired402Response;
-    const urgency = paymentData.expires_in < 60 ? 'critical' : paymentData.expires_in < 300 ? 'high' : 'normal';
+    if (status === HTTP_STATUS.PAYMENT_REQUIRED) {
+      const paymentData = data as BidRequired402Response;
+      const urgency = paymentData.expires_in < 60 ? 'critical' : paymentData.expires_in < 300 ? 'high' : 'normal';
 
-    return {
-      status: 'payment_pending',
-      action_required: 'payment',
-      urgency: urgency,
-      bid: {
-        bid_id: paymentData.bid_id,
-        ton_amount: paymentData.ton_amount,
-        estimated_token: paymentData.estimated_token,
-        expires_at: paymentData.expiresAt,
-        expires_in_seconds: paymentData.expires_in,
-        locked_price: paymentData.current_price_ton,
-      },
-      payment: {
-        required: true,
-        recipient: paymentData.pay_to,
-        amount: paymentData.ton_amount,
-        comment_required: paymentData.bid_id,
-        deeplink: paymentData.tonconnect_universal_link,
-        deeplink_instructions: 'Click this link to open your TON wallet app and complete the payment. This is a direct wallet link, not a QR code.',
-        expires_in_seconds: paymentData.expires_in,
-      },
-      next_step: 'send_payment',
-    };
+      return {
+        status: 'payment_pending',
+        action_required: 'payment',
+        urgency: urgency,
+        bid: {
+          bid_id: paymentData.bid_id,
+          ton_amount: paymentData.ton_amount,
+          estimated_token: paymentData.estimated_token,
+          expires_at: paymentData.expiresAt,
+          expires_in_seconds: paymentData.expires_in,
+          locked_price: paymentData.current_price_ton,
+        },
+        payment: {
+          required: true,
+          recipient: paymentData.pay_to,
+          amount: paymentData.ton_amount,
+          comment_required: paymentData.bid_id,
+          deeplink: paymentData.tonconnect_universal_link,
+          deeplink_instructions: 'Click this link to open your TON wallet app and complete the payment. This is a direct wallet link, not a QR code.',
+          expires_in_seconds: paymentData.expires_in,
+        },
+        next_step: 'send_payment',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    if (status === HTTP_STATUS.GONE) {
+      const closedData = data as AuctionClosed410Response;
+      return {
+        status: 'auction_closed',
+        action_required: 'none',
+        auction: {
+          status: 'closed',
+          final_price_ton: closedData.final_price_ton,
+          closed_at: closedData.closed_at,
+        },
+        next_step: 'check_my_bid',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // 200 OK - bid exists with status
+    if (status === HTTP_STATUS.OK) {
+      // Type guard to check for status field
+      if (!('status' in data)) {
+        throw new Error('Invalid response: missing status field');
+      }
+
+      const bidData = data as BidCompletedApiResponse | BidAllocatedResponse | BidRefundedResponse;
+      
+      // Determine action required based on bid status
+      let actionRequired: 'payment' | 'wait' | 'none' = 'none';
+      let nextStep = 'check_wallet';
+      
+      if (bidData.status === 'pending') {
+        actionRequired = 'payment';
+        nextStep = 'send_payment';
+      } else if (bidData.status === 'completed') {
+        actionRequired = 'wait';
+        nextStep = 'wait_for_allocation';
+      } else if (bidData.status === 'allocated') {
+        actionRequired = 'none';
+        nextStep = 'check_wallet';
+      } else if (bidData.status === 'refunded') {
+        actionRequired = 'none';
+        nextStep = 'check_wallet';
+      }
+
+      return {
+        status: bidData.status,
+        action_required: actionRequired,
+        bid: {
+          bid_id: bidData.bid_id,
+          ton_amount: bidData.ton_amount,
+          bid_price_ton: 'bid_price_ton' in bidData ? bidData.bid_price_ton : undefined,
+          estimated_token: 'estimated_token' in bidData ? bidData.estimated_token : undefined,
+          current_auction_price: 'current_auction_price' in bidData ? bidData.current_auction_price : undefined,
+          tx_hash: bidData.tx_hash,
+          created_at: 'created_at' in bidData ? bidData.created_at : undefined,
+          allocated_token: 'allocated_token' in bidData ? bidData.allocated_token : undefined,
+          refund_ton: 'refund_ton' in bidData ? bidData.refund_ton : undefined,
+        },
+        payment: {
+          confirmed: true,
+          paymentId: bidData.paymentId,
+          amount: bidData.amount,
+          payer: bidData.payer,
+          timestamp: bidData.timestamp,
+          signature: bidData.signature,
+        },
+        next_step: nextStep,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Handle unexpected status codes
+    throw new Error(`Unexpected response status: ${status}`);
+    
+  } catch (error: any) {
+    // Handle rate limiting and other API errors
+    if (error.code === 420) {
+      const rateLimitData = error.details as EnhanceYourCalm420Response;
+      return {
+        status: 'rate_limited',
+        action_required: 'wait',
+        error: 'rate_limited',
+        message: rateLimitData?.message || 'Too many requests. Please wait before checking bid status again.',
+        retry_after: rateLimitData?.retry_after || 60,
+        calm_token: rateLimitData?.calm_token,
+        calm_token_expires_in: rateLimitData?.calm_token_expires_in,
+        next_step: 'retry_later',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    if (error.error === 'bid_not_found') {
+      return {
+        status: 'not_found',
+        action_required: 'none',
+        error: 'bid_not_found',
+        message: 'Bid ID not found. Please verify the bid ID is correct.',
+        next_step: 'check_bid_id',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Re-throw unexpected errors
+    throw error;
   }
-
-  if (status === HTTP_STATUS.GONE) {
-    const closedData = data as AuctionClosed410Response;
-    return {
-      status: 'auction_closed',
-      action_required: 'none',
-      auction: {
-        status: 'closed',
-        final_price_ton: closedData.final_price_ton,
-        closed_at: closedData.closed_at,
-      },
-      next_step: 'check_my_bid',
-    };
-  }
-
-  // 200 OK - bid exists with status
-  // Type guard to check for status field
-  if (!('status' in data)) {
-    throw new Error('Invalid response: missing status field');
-  }
-  
-  return {
-    status: data.status || 'unknown',
-    action_required: data.status === 'pending' ? 'payment' : 'none',
-  };
 }
 
 /**
