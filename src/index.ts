@@ -107,12 +107,13 @@ RESPONSE FORMAT (Structured Data):
 
 WORKFLOW:
 1. Verify auction active (get_auction_info)
-2. Collect: amount (${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON}) + wallet address
+2. Collect: amount (${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON}) + user's wallet address
 3. Call create_auction_bid
 4. If status="payment_required":
    - Present payment.deeplink as a CLICKABLE LINK (not QR code)
-   - Explain: "Click this link to open your TON wallet and complete payment"
-   - Show: recipient address, exact amount, required comment (bid_id)
+   - Explain: "Click this link to open your TON wallet and complete payment TO THE AUCTION"
+   - Show: payment.recipient (auction address), exact amount, required comment (bid_id)
+   - IMPORTANT: Payment goes to payment.recipient (auction), NOT to the user's wallet
    - Display: time remaining (expires_in_seconds)
 5. If urgency="critical": Emphasize time sensitivity (expires_in_seconds < 60)
 6. If status="completed"/"allocated": Inform user of current state
@@ -128,7 +129,7 @@ ERRORS:
         .describe(`Amount of TON to bid. Range: ${BID_LIMITS.MIN_TON}-${BID_LIMITS.MAX_TON} TON. This is maximum payment - partial refunds possible if oversubscribed or target not reached.`),
       wallet: z.string()
         .regex(/^((UQ|EQ)[A-Za-z0-9_-]{44,48}|(-1|0):[a-fA-F0-9]{64})$/)
-        .describe('TON wallet address in user-friendly or raw format. User-friendly: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". Raw: "0:abc123..." or "-1:abc123...". This address receives tokens if successful, or refunds if applicable.'),
+        .describe('YOUR wallet address (not the payment destination). User-friendly: "UQBlen9nrjWVN5K-O6yzLeNH5hMrQqAw-6LfW3RnISrMg0nw" or "EQAbc123...". Raw: "0:abc123..." or "-1:abc123...". This identifies your bid and is where you\'ll receive allocated tokens or refunds. Payment is sent to the auction address provided in the response.'),
     },
   },
   async ({ ton_amount, wallet }) => {
